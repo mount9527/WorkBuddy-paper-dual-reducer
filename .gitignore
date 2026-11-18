@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+Thumbs.db
+# 本机运行产物（正常不会落在仓库里；状态默认在 ~/.workbuddy/paper-dual）
+test-state/
+out/
+*.log

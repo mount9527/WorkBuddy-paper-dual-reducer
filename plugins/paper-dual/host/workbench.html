@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>论文双降工作台</title>
+<style>
+  :root{
+    --canvas:#f3f2ee; --paper:#fff; --ink:#171a1f; --muted:#6d7178; --faint:#969aa1;
+    --line:#e3e1da; --line-strong:#cfccc2; --accent:#1f4e79; --accent-soft:#eaf0f6;
+    --high:#b23a2f; --mid:#b4761e; --low:#3f7a52; --warn-bg:#fdf4e6;
+    --mono:"Cascadia Mono","Consolas","SFMono-Regular",monospace;
+    --sans:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    --serif:"Georgia","Songti SC","SimSun",serif;
+    --shadow:0 1px 2px rgba(23,26,31,.05),0 8px 24px -18px rgba(23,26,31,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6}
+  button{font:inherit;cursor:pointer}
+  code,pre,.mono{font-family:var(--mono)}
+  a{color:var(--accent)}
+  .app{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:100vh}
+  /* ---------- rail ---------- */
+  .rail{background:#1b1f25;color:#e8e6e0;padding:22px 18px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh;overflow:auto}
+  .brand{display:flex;align-items:baseline;gap:8px}
+  .brand b{font-family:var(--serif);font-size:19px;letter-spacing:.02em;font-weight:600}
+  .brand span{font-size:9px;letter-spacing:.18em;color:#8e959f;text-transform:uppercase}
+  .docbox{border-top:1px solid #333941;padding-top:14px}
+  .docbox .t{font-size:14px;font-weight:600;line-height:1.45;word-break:break-all}
+  .docbox .p{font-size:11px;color:#8e959f;line-height:1.5;margin-top:5px;word-break:break-all}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .chip{font-size:10px;padding:2px 7px;border:1px solid #3b424b;border-radius:999px;color:#b9c0c9}
+  .chip.warn{border-color:#6b4a25;color:#e0b077;background:#2a2117}
+  .rail h4{font-size:10px;letter-spacing:.14em;color:#8e959f;margin:0 0 8px;font-weight:600;text-transform:uppercase}
+  .vlist{display:flex;flex-direction:column;gap:2px}
+  .vitem{display:grid;grid-template-columns:14px 1fr auto;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;background:none;border:0;color:#d6d9de;text-align:left;width:100%}
+  .vitem:hover{background:#262c34}
+  .vitem[aria-current="true"]{background:#2d343d;color:#fff}
+  .vdot{width:7px;height:7px;border-radius:50%;background:#666d77}
+  .vdot.applied{background:#63b183}.vdot.rejected{background:#d1705f}.vdot.planned{background:#d3a04a}.vdot.diagnosed{background:#7f8792}
+  .vmeta{font-size:10px;color:#8e959f}
+  .nav{display:flex;flex-direction:column;gap:1px;border-top:1px solid #333941;padding-top:14px}
+  .nav button{display:flex;align-items:center;gap:9px;width:100%;padding:8px 9px;border:0;border-radius:6px;background:none;color:#c4cad2;text-align:left;font-size:13px}
+  .nav button:hover{background:#262c34;color:#fff}
+  .nav button.on{background:#2d343d;color:#fff}
+  .nav .num{font-family:var(--mono);font-size:10px;color:#7d8590;width:16px}
+  .railfoot{margin-top:auto;font-size:10px;color:#7d8590;line-height:1.6;border-top:1px solid #333941;padding-top:12px}
+  .railfoot b{color:#b9c0c9;font-weight:500}
+  /* ---------- main ---------- */
+  main{min-width:0;padding:26px 34px 60px;max-width:1240px;width:100%}
+  .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding-bottom:16px;border-bottom:1px solid var(--line-strong)}
+  .topbar h1{font-family:var(--serif);font-size:23px;font-weight:600;margin:0;letter-spacing:.01em}
+  .topbar .sub{font-size:12px;color:var(--muted);margin-top:5px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--line-strong);background:var(--paper);border-radius:6px;color:var(--ink);font-size:12px;white-space:nowrap;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+  .btn:hover{border-color:#b5b1a6;background:#fbfaf7}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:#173d5f}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.small{padding:4px 9px;font-size:11px}
+  .section{display:none;padding-top:26px}
+  .section.on{display:block}
+  .sechead{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:14px}
+  .sechead h2{font-family:var(--serif);font-size:18px;margin:0;font-weight:600}
+  .sechead .note{font-size:11px;color:var(--muted)}
+  .grid{display:grid;gap:14px}
+  .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:16px 17px;box-shadow:var(--shadow)}
+  .card h3{font-size:11px;letter-spacing:.08em;color:var(--muted);margin:0 0 10px;font-weight:600;text-transform:uppercase}
+  .stat .v{font-family:var(--serif);font-size:30px;line-height:1.1;letter-spacing:-.01em}
+  .stat .u{font-size:12px;color:var(--muted);margin-left:3px;font-family:var(--sans)}
+  .stat .h{font-size:11px;color:var(--faint);margin-top:6px}
+  .distbar{display:flex;height:9px;border-radius:999px;overflow:hidden;background:#ecebe5;margin:10px 0 8px}
+  .distbar i{display:block;height:100%}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+  .legend b{font-family:var(--mono);font-weight:600;color:var(--ink);margin-left:4px}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;vertical-align:1px;margin-right:5px}
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.t th{text-align:left;font-size:10px;letter-spacing:.07em;color:var(--muted);font-weight:600;padding:0 8px 8px;border-bottom:1px solid var(--line)}
+  table.t td{padding:9px 8px;border-bottom:1px solid #efeee9;vertical-align:top}
+  table.t tr:last-child td{border-bottom:0}
+  table.t tr.row{cursor:pointer}
+  table.t tr.row:hover td{background:#fbfaf6}
+  .pid{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .riskbar{width:36px;height:3px;background:#ecebe5;border-radius:2px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:5px}
+  .riskbar i{display:block;height:100%}
+  .riskcell{white-space:nowrap}
+  .lvl{font-size:10px;padding:1px 6px;border-radius:3px;font-weight:600;letter-spacing:.03em}
+  .lvl.high{color:var(--high);background:#f9e9e6}.lvl.mid{color:var(--mid);background:#fbf0dd}.lvl.low{color:var(--low);background:#e9f2ec}
+  .op{font-family:var(--sans);font-size:10.5px;font-weight:600;letter-spacing:.02em;color:var(--accent);background:var(--accent-soft);padding:1px 5px;border-radius:3px}
+  .para{font-size:12.5px;color:#3c4046;line-height:1.75;background:#faf9f5;border-left:2px solid var(--line-strong);padding:9px 12px;margin:8px 0 0;white-space:pre-wrap;word-break:break-word}
+  .empty{padding:46px 20px;text-align:center;color:var(--muted);border:1px dashed var(--line-strong);border-radius:9px;background:#fbfaf7}
+  .empty b{display:block;font-family:var(--serif);font-size:17px;color:var(--ink);margin-bottom:6px;font-weight:600}
+  .kv{display:grid;grid-template-columns:96px 1fr;gap:6px 12px;font-size:12px}
+  .kv dt{color:var(--muted)}.kv dd{margin:0;word-break:break-all}
+  .mono{font-family:var(--mono);font-size:11.5px}
+  .copy{position:relative}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(10px);background:#1b1f25;color:#fff;padding:8px 14px;border-radius:6px;font-size:12px;opacity:0;pointer-events:none;transition:.18s;z-index:50}
+  .toast.on{opacity:1;transform:translateX(-50%)}
+  /* AIGC */
+  .gauge{position:relative;height:34px;margin:12px 0 6px}
+  .gauge .track{position:absolute;inset:11px 0 auto;height:8px;border-radius:999px;background:linear-gradient(90deg,#e7f1ea 0 15%,#fbf1de 15% 30%,#f7e3df 30% 100%)}
+  .gauge .mark{position:absolute;top:0;width:2px;height:30px;background:var(--ink)}
+  .gauge .mark b{position:absolute;top:-1px;left:6px;font-family:var(--mono);font-size:11px;white-space:nowrap}
+  .gauge .lab{position:absolute;bottom:-18px;font-size:10px;color:var(--muted)}
+  .bigshare{font-family:var(--serif);font-size:42px;line-height:1;letter-spacing:-.02em}
+  .bandpill{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:3px 9px;border-radius:999px;background:#f3f2ee;border:1px solid var(--line)}
+  .dims{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .dim{border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:#fcfbf8}
+  .dim .n{font-size:11.5px;display:flex;align-items:center;gap:6px}
+  .dim .m{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px}
+  .dim.bad{border-color:#ead3ce;background:#fdf6f4}
+  .dim.ok{border-color:#dbe7dd;background:#f7fbf8}
+  .todo{margin:8px 0 0;padding-left:18px;font-size:12px;color:#3c4046;line-height:1.8}
+  /* tasks */
+  .prompt{border:1px solid var(--line);border-radius:7px;margin-bottom:8px;background:#fff}
+  .prompt summary{list-style:none;cursor:pointer;padding:10px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .prompt summary::-webkit-details-marker{display:none}
+  .prompt summary .arrow{color:var(--faint);font-size:10px;transition:.15s}
+  .prompt[open] summary .arrow{transform:rotate(90deg)}
+  .prompt .body{padding:0 12px 12px;border-top:1px solid #f0efe9}
+  .prompt pre{white-space:pre-wrap;word-break:break-word;background:#faf9f5;border:1px solid #f0efe9;border-radius:5px;padding:10px;font-size:11.5px;line-height:1.7;max-height:340px;overflow:auto;margin:10px 0 0}
+  .instr{background:#1b1f25;color:#d9dde3;border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:11.5px;line-height:1.75;white-space:pre-wrap;overflow:auto;max-height:300px}
+  textarea.edits{width:100%;min-height:150px;border:1px solid var(--line-strong);border-radius:7px;padding:10px 12px;font-family:var(--mono);font-size:11.5px;line-height:1.6;background:#fff;resize:vertical}
+  .notice{font-size:11.5px;color:#6a4a17;background:var(--warn-bg);border:1px solid #f0dfc0;border-radius:6px;padding:8px 11px;margin:10px 0}
+  .oknote{font-size:11.5px;color:#2f6446;background:#eff7f1;border:1px solid #d8e8dd;border-radius:6px;padding:8px 11px;margin:10px 0}
+  /* diff */
+  .diffhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+  .diffrow{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden;background:#fff}
+  .diffrow .top{display:flex;align-items:center;gap:10px;padding:7px 12px;background:#faf9f5;border-bottom:1px solid var(--line);font-size:11px;color:var(--muted)}
+  .diffcols{display:grid;grid-template-columns:1fr 1fr 132px}
+  .diffcols>div{padding:11px 13px;font-size:12.5px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+  .diffcols .before{color:#4a4e54;border-right:1px solid var(--line)}
+  .diffcols .after{color:#1f2a22;background:#fbfdfb}
+  .diffcols .delta{border-left:1px solid var(--line);font-family:var(--mono);font-size:10.5px;color:var(--muted);display:flex;flex-direction:column;gap:5px;justify-content:center}
+  .diffcols .delta b{font-weight:600;color:var(--ink)}
+  /* report */
+  .report{background:#fff;border:1px solid var(--line);border-radius:9px;padding:26px 30px;font-size:13px;line-height:1.85;box-shadow:var(--shadow)}
+  .report h1,.report h2,.report h3{font-family:var(--serif);font-weight:600;line-height:1.35;margin:1.5em 0 .55em}
+  .report h1{font-size:22px;margin-top:0}.report h2{font-size:17px;border-bottom:1px solid var(--line);padding-bottom:5px}.report h3{font-size:14px}
+  .report p{margin:.65em 0}.report ul,.report ol{padding-left:22px}
+  .tablewrap{overflow-x:auto;margin:12px 0}
+  .report table{border-collapse:collapse;width:100%;font-size:11.5px;margin:0}
+  .report th,.report td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+  .report th{background:#f7f6f1;font-weight:600;white-space:nowrap}
+  .report code{background:#f3f2ec;padding:1px 4px;border-radius:3px;font-size:11.5px}
+  .report pre{background:#f7f6f1;border:1px solid var(--line);border-radius:6px;padding:11px;overflow:auto;font-size:11.5px}
+  .report blockquote{margin:12px 0;padding:8px 14px;border-left:3px solid var(--line-strong);color:#50545a;background:#faf9f5}
+  .boundary{font-size:11px;color:var(--faint);line-height:1.8;border-top:1px solid var(--line);margin-top:34px;padding-top:14px}
+  .boundary b{color:var(--muted);font-weight:600}
+  @media (max-width:1080px){.g4{grid-template-columns:repeat(2,1fr)}.diffcols{grid-template-columns:1fr 1fr}.diffcols .delta{display:none}}
+  @media (max-width:860px){
+    .app{grid-template-columns:1fr}
+    .rail{position:static;height:auto;padding:16px}
+    .nav{flex-direction:row;flex-wrap:wrap;border-top:0;padding-top:8px}
+    .nav button{width:auto}
+    main{padding:18px 16px 40px}
+    .g3,.g2{grid-template-columns:1fr}
+    .topbar{flex-direction:column}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div class="brand"><b>论文双降</b><span>workbench</span></div>
+    <div class="docbox">
+      <div class="t" id="docTitle">未载入文档</div>
+      <div class="p" id="docPath">—</div>
+      <div class="chips" id="docChips"></div>
+    </div>
+    <div>
+      <h4>版本链</h4>
+      <div class="vlist" id="vlist"></div>
+    </div>
+    <nav class="nav" id="nav">
+      <button data-view="overview" class="on"><span class="num">01</span>概览与风险</button>
+      <button data-view="aigc"><span class="num">02</span>AIGC 考官</button>
+      <button data-view="tasks"><span class="num">03</span>改写任务</button>
+      <button data-view="diff"><span class="num">04</span>三栏对照</button>
+      <button data-view="report"><span class="num">05</span>报告</button>
+    </nav>
+    <div class="railfoot">
+      <div>引擎 <b id="engineState">—</b></div>
+      <div>考官 <b id="aigcState">—</b></div>
+      <div style="margin-top:6px" id="modeState">静态快照</div>
+      <div style="margin-top:6px">v<span id="pluginVersion"></span> · WorkBuddy</div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1 id="pageTitle">论文双降工作台</h1>
+        <div class="sub">
+          <span id="subMeta">诊断、定向改写、回填复检与分项验收</span>
+        </div>
+      </div>
+      <div class="actions" id="actions"></div>
+    </div>
+
+    <section class="section on" id="view-overview">
+      <div id="overviewBody"></div>
+    </section>
+
+    <section class="section" id="view-aigc">
+      <div id="aigcBody"></div>
+    </section>
+
+    <section class="section" id="view-tasks">
+      <div id="tasksBody"></div>
+    </section>
+
+    <section class="section" id="view-diff">
+      <div id="diffBody"></div>
+    </section>
+
+    <section class="section" id="view-report">
+      <div id="reportBody"></div>
+    </section>
+
+    <div class="boundary">
+      <b>口径边界</b>　风险分是篇内相对指标，只用于同一篇里排序，跨文档不可比；AIGC 考官给的是本工具自有口径下的正文 AI 疑似占比，
+      不等于知网／维普／格子达的判定，也不与任何第三方平台横比。标题、表格、公式、脚注、参考文献一律不改；改稿必须由作者复核。
+      工作台不追踪、不上传，所有产物留在本机。
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script id="paper-dual-state" type="application/json">__PAPER_DUAL_STATE__</script>
+<script>
+(() => {
+  "use strict";
+  const EMBEDDED = JSON.parse(document.getElementById("paper-dual-state").textContent || "{}");
+  const SERVED = location.protocol === "http:" || location.protocol === "https:";
+  let state = EMBEDDED;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const pct = (v) => (Number.isFinite(Number(v)) ? (Number(v) * 100).toFixed(1) : "—");
+  const num = (v, d = 2) => (Number.isFinite(Number(v)) ? Number(v).toFixed(d) : "—");
+  const LEVEL = { high: "高", mid: "中", low: "低" };
+  const LEVEL_COLOR = { high: "var(--high)", mid: "var(--mid)", low: "var(--low)" };
+  const STATUS = { applied: "已验收", rejected: "被拒", planned: "待回填", diagnosed: "已诊断", failed: "失败" };
+  const BAND = { safe: "AI 特征不明显", warn: "存在 AI 特征段落", risk: "AI 特征显著" };
+
+  function toast(msg) {
+    const el = $("toast");
+    el.textContent = msg;
+    el.classList.add("on");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove("on"), 1800);
+  }
+  async function copy(text, label) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast((label || "已复制") + " · " + text.length + " 字符");
+    } catch {
+      toast("复制失败，请手动选择");
+    }
+  }
+  async function api(path, body) {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      toast(data.error || "操作失败");
+      if (data.setup && data.setup.installScript) {
+        showSetup(data.setup);
+      }
+      return data;
+    }
+    state = await (await fetch("/api/state", { cache: "no-store" })).json();
+    render();
+    return data;
+  }
+  function showSetup(setup) {
+    const box = document.createElement("div");
+    box.className = "notice";
+    box.innerHTML = "<b>AIGC 考官还差依赖</b><pre class='mono' style='white-space:pre-wrap;margin:8px 0 0'>" + esc(setup.installScript || "") + "</pre>";
+    document.querySelector("main").prepend(box);
+  }
+
+  // ------------------------------------------------------------ render
+  function render() {
+    const doc = state.doc;
+    if (!doc) return renderEmpty();
+    $("docTitle").textContent = doc.title || "论文";
+    $("docPath").textContent = doc.path || "";
+    $("pluginVersion").textContent = state.pluginVersion || "";
+    $("engineState").textContent = state.engine && state.engine.ready ? "就绪" : "缺失";
+    $("aigcState").textContent = state.aigc && state.aigc.ready ? "真机" : "未安装";
+    $("modeState").textContent = SERVED ? "本地服务 · 可写" : "静态快照 · 只读";
+    const chips = [];
+    if (doc.converted) chips.push('<span class="chip">.doc 已转副本</span>');
+    if (doc.changed) chips.push('<span class="chip warn">原文件已变，需重新诊断</span>');
+    if (state.active && state.active.scope) chips.push('<span class="chip">' + esc({ dedupe: "只降重", aigc: "只降 AI", both: "双降" }[state.active.scope] || state.active.scope) + "</span>");
+    $("docChips").innerHTML = chips.join("");
+    renderVersions();
+    renderActions();
+    renderOverview();
+    renderAigc();
+    renderTasks();
+    renderDiff();
+    renderReport();
+  }
+
+  function renderEmpty() {
+    $("docTitle").textContent = "还没有论文";
+    $("docPath").textContent = "先诊断一篇 .doc/.docx";
+    $("vlist").innerHTML = "";
+    $("actions").innerHTML = "";
+    $("overviewBody").innerHTML = '<div class="empty"><b>工作台还是空的</b>在对话里说「诊断这篇论文」，或运行 <code>paperdual.py diagnose --in 论文.docx</code>，再来打开工作台。</div>';
+    ["aigc", "tasks", "diff", "report"].forEach((v) => { $("view-" + v).innerHTML = ""; });
+  }
+
+  function renderVersions() {
+    const doc = state.doc;
+    if (!doc) return;
+    $("vlist").innerHTML = (doc.versions || []).map((v) => {
+      const current = v.id === doc.activeVersionId;
+      return '<button class="vitem" data-version="' + esc(v.id) + '" aria-current="' + current + '">' +
+        '<span class="vdot ' + esc(v.status) + '"></span>' +
+        '<span>' + esc(v.label) + '<span class="vmeta"> · ' + esc(v.id) + '</span></span>' +
+        '<span class="vmeta">' + esc(STATUS[v.status] || v.status) + '</span></button>';
+    }).join("");
+    $("vlist").querySelectorAll("[data-version]").forEach((el) => {
+      el.onclick = () => selectVersion(el.dataset.version);
+    });
+  }
+
+  function renderActions() {
+    const doc = state.doc;
+    const active = state.active || {};
+    const acts = [];
+    if (SERVED) {
+      acts.push('<button class="btn small" data-act="diagnose">重新诊断</button>');
+      if (doc.canCreateVersion) acts.push('<button class="btn small primary" data-act="plan">生成' + (active.id === "original" ? "改写任务" : "下一轮任务") + "</button>");
+      if (active.id !== "original") acts.push('<button class="btn small" data-act="aigc">跑考官</button>');
+      acts.push('<button class="btn small" data-act="workbench">刷新</button>');
+    } else {
+      acts.push('<button class="btn small" data-act="cmddiag">复制诊断命令</button>');
+      acts.push('<button class="btn small" data-act="cmdplan">复制任务命令</button>');
+      acts.push('<button class="btn small" data-act="cmdapply">复制回填命令</button>');
+    }
+    $("actions").innerHTML = acts.join("");
+    $("actions").querySelectorAll("[data-act]").forEach((el) => {
+      el.onclick = () => handleAction(el.dataset.act);
+    });
+  }
+
+  function handleAction(act) {
+    const doc = state.doc;
+    if (act === "cmddiag") return copy('python "' + (state.engine.dir || "").replace(/engine$/, "host/paperdual.py") + '" diagnose --in "' + doc.path + '"', "诊断命令已复制");
+    if (act === "cmdplan") return copy('python "' + (state.engine.dir || "").replace(/engine$/, "host/paperdual.py") + '" plan --scope both', "任务命令已复制");
+    if (act === "cmdapply") return copy('python "' + (state.engine.dir || "").replace(/engine$/, "host/paperdual.py") + '" apply', "回填命令已复制");
+    if (act === "workbench") return location.reload();
+    if (act === "plan") return api("/api/plan", { scope: activeScope() });
+    if (act === "aigc") return api("/api/aigc", { version: doc.activeVersionId });
+    if (act === "diagnose") {
+      const p = window.prompt("论文 .doc/.docx 的绝对路径", doc.path || "");
+      if (p) return api("/api/diagnose", { path: p, force: true });
+    }
+  }
+  function activeScope() {
+    const scope = state.active && state.active.scope;
+    return scope === "dedupe" || scope === "both" ? scope : "aigc";
+  }
+  function selectVersion(vid) {
+    if (!SERVED) {
+      const target = (state.doc.versions || []).find((v) => v.id === vid);
+      toast("静态快照不能切换版本；请用 versions --select " + vid + (target ? "（" + target.label + "）" : ""));
+      return;
+    }
+    api("/api/select", { versionId: vid });
+  }
+
+  // ------------------------------------------------------------ overview
+  function renderOverview() {
+    const doc = state.doc;
+    const s = doc.summary || {};
+    const stats = s.stats || {};
+    const dist = s.dist || {};
+    const active = state.active || {};
+    const diag = (state.workbench && state.workbench.diag) || null;
+    const high = dist.high || 0, mid = dist.mid || 0, low = dist.low || 0;
+    const total = Math.max(1, high + mid + low);
+    const top = s.top || [];
+    const recheck = active.recheck || {};
+    const dupBefore = recheck.dup && recheck.dup.before != null ? recheck.dup.before : s.repeatRate;
+    const dupAfter = recheck.dup && recheck.dup.after != null ? recheck.dup.after : null;
+    const dupValue = dupAfter != null ? pct(dupAfter) + '<span class="u">%</span>' : pct(s.repeatRate) + '<span class="u">%</span>';
+    const dupHint = dupAfter != null ? "复检口径 " + pct(dupBefore) + "% → " + pct(dupAfter) + "%" : "原文诊断口径 · 13 字指纹";
+    const versionRows = (doc.versions || []).slice().reverse().map((v) => {
+      const parts = [];
+      if (v.tasks) parts.push(v.tasks + " 段任务");
+      if (v.prompts) parts.push(v.prompts + " 条提示词");
+      if (v.passed === true) parts.push("已验收");
+      if (v.passed === false) parts.push("未通过");
+      return '<tr><td class="pid">' + esc(v.id) + '</td><td>' + esc(v.label) + '</td><td>' + esc(STATUS[v.status] || v.status) + '</td><td class="mono">' + esc(parts.join(" · ") || "—") + '</td></tr>';
+    }).join("");
+
+    $("overviewBody").innerHTML =
+      '<div class="grid g4" style="margin-bottom:14px">' +
+        statCard("可改写段落", stats.rewritable == null ? "—" : stats.rewritable, "共 " + (stats.paragraphs || "—") + " 段，锁定 " + (stats.locked || "—")) +
+        statCard("高风险段", high, "中 " + mid + " · 低 " + low + (active.id !== "original" ? " · 原文诊断口径" : "")) +
+        statCard("篇内重复率", dupValue, dupHint) +
+        statCard("正文字数", stats.chars == null ? "—" : stats.chars, "可改写 " + (stats.rewritable_chars || "—") + " 字") +
+      '</div>' +
+      '<div class="grid g2" style="margin-bottom:14px">' +
+        '<div class="card"><h3>风险分布</h3>' +
+          '<div class="distbar"><i style="width:' + (100 * high / total) + '%;background:var(--high)"></i><i style="width:' + (100 * mid / total) + '%;background:var(--mid)"></i><i style="width:' + (100 * low / total) + '%;background:var(--low)"></i></div>' +
+          '<div class="legend"><span><i class="dot" style="background:var(--high)"></i>高<b>' + high + '</b></span><span><i class="dot" style="background:var(--mid)"></i>中<b>' + mid + '</b></span><span><i class="dot" style="background:var(--low)"></i>低<b>' + low + '</b></span></div>' +
+          '<div class="kv" style="margin-top:14px"><dt>锁定原因</dt><dd class="mono">' + esc(Object.entries(s.lockReasons || {}).map(([k, v]) => k + " " + v).join(" · ") || "—") + '</dd>' +
+          '<dt>当前版本</dt><dd>' + esc(active.label || "原文") + '（' + esc(active.id || "original") + '）</dd>' +
+          '<dt>基础版本</dt><dd>' + esc(active.baseLabel || "—") + '</dd></div>' +
+        '</div>' +
+        '<div class="card"><h3>9 维痕迹（' + esc(active.label || "原文") + '）</h3>' +
+          (diag ? renderDimSummary(diag.result, diag.gateRewritable) : '<div class="note" style="color:var(--muted);font-size:12px">还没有这一版的 9 维诊断；跑一次 plan 或 aigc 会生成。</div>') +
+        '</div>' +
+      '</div>' +
+      '<div class="card" style="margin-bottom:14px"><h3>Top 风险段落 · 点行展开原文</h3>' +
+        (top.length ? '<table class="t"><thead><tr><th style="width:64px">段落</th><th style="width:150px">风险</th><th style="width:96px">主因</th><th style="width:64px">算子</th><th>原文</th></tr></thead><tbody>' +
+          top.map((x) => '<tr class="row" data-pid="' + esc(x.pid) + '"><td class="pid">' + esc(x.pid) + '</td>' +
+            '<td class="riskcell"><span class="riskbar"><i style="width:' + Math.round(100 * Number(x.risk || 0)) + '%;background:' + (LEVEL_COLOR[x.level] || "var(--faint)") + '"></i></span><span class="mono">' + num(x.risk) + '</span> <span class="lvl ' + esc(x.level) + '">' + esc(LEVEL[x.level] || "") + '</span></td>' +
+            '<td style="font-size:11.5px">' + esc(x.cause || "—") + '</td><td><span class="op">' + esc(x.op || "—") + '</span></td>' +
+            '<td style="font-size:12px;color:#4a4e54">' + esc((x.text || "").slice(0, 52)) + (String(x.text || "").length > 52 ? "…" : "") + '</td></tr>' +
+            '<tr class="detail" data-detail="' + esc(x.pid) + '" style="display:none"><td colspan="5"><div class="para">' + esc(x.text || "") + '</div></td></tr>').join("") +
+          '</tbody></table>' : '<div class="note" style="color:var(--muted)">没有达到阈值的段落；可以按相对排序取前几段，或这篇稿子确实不需要改。</div>') +
+      '</div>' +
+      '<div class="card"><h3>版本链</h3><table class="t"><thead><tr><th style="width:60px">版本</th><th style="width:70px">名称</th><th style="width:86px">状态</th><th>产物</th></tr></thead><tbody>' + versionRows + '</tbody></table></div>';
+
+    $("overviewBody").querySelectorAll("tr.row").forEach((tr) => {
+      tr.onclick = () => {
+        const d = $("overviewBody").querySelector('tr.detail[data-detail="' + tr.dataset.pid + '"]');
+        if (d) d.style.display = d.style.display === "none" ? "" : "none";
+      };
+    });
+  }
+
+  function statCard(label, value, hint) {
+    return '<div class="card stat"><h3>' + esc(label) + '</h3><div class="v">' + value + '</div><div class="h">' + esc(hint) + '</div></div>';
+  }
+
+  function renderDimSummary(result, gate) {
+    const dims = [["template","模板套话"],["passive","被动句"],["burstiness","句长起伏"],["symmetry","结构对称"],["nested","层层嵌套"],["colon","冒号列举"],["punct","标点节奏"],["colloquial","口语化"],["dash","破折号"]];
+    const cells = dims.map(([k, label]) => {
+      const item = (result || {})[k] || {};
+      const bad = item.risk || item.gate_failed || (k === "burstiness" && item.level === "low");
+      const metric = item.count != null ? item.count + " 处" : item.level ? "等级 " + item.level : item.score != null ? "分 " + num(item.score) : "";
+      return '<div class="dim ' + (bad ? "bad" : "ok") + '"><div class="n"><i class="dot" style="background:' + (bad ? "var(--high)" : "var(--low)") + '"></i>' + label + '</div><div class="m">' + esc(metric || (bad ? "需改写" : "正常")) + '</div></div>';
+    }).join("");
+    const todo = (result && result.todo || []).map((t) => "<li>" + esc(t) + "</li>").join("");
+    return '<div class="dims">' + cells + '</div>' +
+      '<div class="legend" style="margin-top:10px"><span>风险 <b>' + (result && result.risk_count != null ? result.risk_count : "—") + '</b> 项</span><span>等级 <b>' + esc((result && result.level) || "—") + '</b></span><span>语体门禁 <b>' + (gate ? "通过" : "未通过") + '</b></span></div>' +
+      (todo ? '<ul class="todo">' + todo + '</ul>' : "");
+  }
+
+  // ------------------------------------------------------------ aigc
+  function renderAigc() {
+    const wb = state.workbench || {};
+    const scoreWrap = wb.score || null;
+    const score = scoreWrap ? (scoreWrap.result || scoreWrap) : null;
+    const diag = wb.diag || null;
+    const ready = state.aigc && state.aigc.ready;
+    const active = state.active || {};
+    let cards = "";
+
+    if (!ready) {
+      const setup = (state.aigc && state.aigc.setup) || {};
+      cards = '<div class="card"><h3>AIGC 考官 · 未安装</h3>' +
+        '<div class="notice">没有 torch + transformers 时，插件不会生成、也不会显示任何 AI 疑似占比。9 维诊断是纯正则，仍然可用。</div>' +
+        '<div class="kv"><dt>模型</dt><dd class="mono">' + esc(setup.model || "yuchuantian/AIGC_detector_zhv3") + '</dd>' +
+        '<dt>解释器</dt><dd class="mono">' + esc(setup.python || "—") + '</dd>' +
+        '<dt>模型缓存</dt><dd class="mono">' + esc(setup.modelCacheDir || "—") + '</dd></div>' +
+        '<h3 style="margin-top:16px">Windows 安装命令</h3><pre class="mono" style="white-space:pre-wrap;background:#faf9f5;border:1px solid var(--line);border-radius:6px;padding:11px;font-size:11px">' + esc(setup.installScript || "") + '</pre>' +
+        '<button class="btn small copy" data-copy="' + esc(setup.installScript || "") + '">复制安装命令</button></div>' +
+        (diag ? '<div class="card" style="margin-top:14px"><h3>9 维痕迹诊断（离线可用）</h3>' + renderDimSummary(diag.result, diag.gateRewritable) + '</div>' : '');
+    } else if (!score) {
+      cards = '<div class="card"><h3>AIGC 考官 · 就绪</h3><div class="note" style="color:var(--muted)">这一版还没有打分。点右上角「跑考官」，或运行 <code>paperdual.py aigc</code>。</div></div>' +
+        (diag ? '<div class="card" style="margin-top:14px"><h3>9 维痕迹诊断</h3>' + renderDimSummary(diag.result, diag.gateRewritable) + '</div>' : '');
+    } else {
+      const share = Number(score.ai_share != null ? score.ai_share : score.ai_prob);
+      const band = score.band || "warn";
+      const frozen = score.comparison_mode === "frozen";
+      cards =
+        '<div class="card" style="margin-bottom:14px"><h3>正文 AI 疑似占比 · ' + esc(active.label || "") + '</h3>' +
+          '<div style="display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap"><div class="bigshare">' + pct(share) + '<span style="font-size:16px;color:var(--muted)">%</span></div>' +
+          '<div><span class="bandpill"><i class="dot" style="background:' + (band === "safe" ? "var(--low)" : band === "warn" ? "var(--mid)" : "var(--high)") + '"></i>' + esc(BAND[band] || "未判档") + '</span>' +
+          '<div class="legend" style="margin-top:8px"><span>' + (score.calibrated ? "已校准" : "未校准") + '</span><span>' + (frozen ? "冻结块" : "重新切块") + '</span><span>稳定性 <b>' + num(score.stability, 4) + '</b></span></div></div></div>' +
+          gauge(share) +
+          '<div class="legend" style="margin-top:22px"><span>正文 <b>' + pct(score.ai_share) + '%</b></span><span>全篇 <b>' + pct(score.all_ai_share) + '%</b></span><span>表格 <b>' + (score.table_ai_share == null ? "—" : pct(score.table_ai_share) + "%") + '</b></span><span>参考文献 <b>' + (score.reference_ai_share == null ? "—" : pct(score.reference_ai_share) + "%") + '</b></span></div>' +
+          '<div class="notice" style="margin-top:14px">这是本工具自有口径下的占比，不是知网／维普／格子达的判定；阈值只用于篇内定位，不能跨平台横比。</div>' +
+        '</div>' +
+        '<div class="grid g2">' +
+          '<div class="card"><h3>贡献最高的块</h3>' + renderSegments(score) + '</div>' +
+          '<div class="card"><h3>9 维痕迹诊断</h3>' + (diag ? renderDimSummary(diag.result, diag.gateRewritable) : '<div class="note" style="color:var(--muted)">还没有 9 维诊断。</div>') + '</div>' +
+        '</div>';
+    }
+    $("aigcBody").innerHTML = cards;
+    $("aigcBody").querySelectorAll("[data-copy]").forEach((el) => {
+      el.onclick = () => copy(el.dataset.copy, "已复制");
+    });
+  }
+
+  function gauge(share) {
+    const p = Math.max(0, Math.min(1, Number(share) || 0));
+    return '<div class="gauge"><div class="track"></div><div class="mark" style="left:calc(' + (p * 100) + '% - 1px)"><b>' + pct(p) + '%</b></div>' +
+      '<div class="lab" style="left:0">0</div><div class="lab" style="left:15%">15%</div><div class="lab" style="left:30%">30%</div><div class="lab" style="right:0">100%</div></div>';
+  }
+
+  function renderSegments(score) {
+    const segs = (score.paragraphs || []).filter((x) => (!x.group || x.group === "rewritable") && !x.locked);
+    const top = (score.top && score.top.length ? score.top : segs.slice().sort((a, b) => (b.contribution || 0) - (a.contribution || 0))).slice(0, 8);
+    if (!top.length) return '<div class="note" style="color:var(--muted)">没有可改写块。</div>';
+    return '<table class="t"><thead><tr><th style="width:70px">段落</th><th style="width:92px">块分</th><th>贡献</th></tr></thead><tbody>' +
+      top.map((x) => '<tr><td class="pid">' + esc(x.pid || ("#" + x.index)) + '</td><td class="mono">' + pct(x.ai_prob) + '%</td>' +
+        '<td><span class="riskbar" style="width:100%"><i style="width:' + Math.round(100 * Math.min(1, Number(x.contribution || 0))) + '%;background:var(--accent)"></i></span><span class="mono">' + pct(x.contribution) + '%</span></td></tr>').join("") +
+      '</tbody></table>';
+  }
+
+  // ------------------------------------------------------------ tasks
+  function renderTasks() {
+    const wb = state.workbench || {};
+    const active = state.active || {};
+    if (active.id === "original") {
+      $("tasksBody").innerHTML = '<div class="empty"><b>原文还没有改写任务</b>先在概览里生成任务：<code>paperdual.py plan --scope aigc</code>。任务会把 9 维痕迹翻译成每一段的改写要求。</div>';
+      return;
+    }
+    const prompts = wb.prompts || [];
+    const taskCards = prompts.map((row) => (
+      '<details class="prompt"><summary><span class="arrow">▶</span><span class="pid">' + esc(row.pid) + '</span>' +
+      '<span class="op">' + esc(row.op || "—") + '</span><span style="font-size:11.5px;color:var(--muted)">' + esc(row.opName || "") + '</span>' +
+      '<span class="mono" style="margin-left:auto;color:var(--muted)">' + esc(row.minChars || "?") + "–" + esc(row.maxChars || "?") + ' 字 · ' + esc(row.sentences || "?") + ' 句</span></summary>' +
+      '<div class="body"><pre>' + esc(row.prompt || "") + '</pre><div style="margin-top:8px"><button class="btn small" data-copy-prompt="' + esc(row.pid) + '">复制这段提示词</button></div></div></details>'
+    )).join("");
+
+    const status = active.status;
+    const canEdit = status !== "applied" || true;
+    $("tasksBody").innerHTML =
+      '<div class="grid g3" style="margin-bottom:14px">' +
+        statCard("本轮任务", active.tasks || prompts.length, "定向纳入 " + ((active.focus || []).length || 0) + " 段") +
+        statCard("提示词", active.prompts || prompts.length, "每段取一条候选") +
+        statCard("版本", esc(active.label || "") + " <span class='u'>" + esc(active.id || "") + "</span>", "基础：" + esc(active.baseLabel || "原文")) +
+      '</div>' +
+      (wb.instruction ? '<div class="card" style="margin-bottom:14px"><div class="sechead"><h2 style="font-size:15px">给模型的作业说明</h2><button class="btn small" id="copyInstruction">复制整段</button></div><div class="instr">' + esc(wb.instruction) + '</div></div>' : "") +
+      '<div class="grid g2" style="align-items:start">' +
+        '<div class="card"><h3>逐段提示词</h3>' + (taskCards || '<div class="note" style="color:var(--muted)">没有提示词。</div>') + '</div>' +
+        '<div class="card"><h3>贴回编辑清单</h3>' +
+          '<div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">一行一条 <code>{"pid","text","op"}</code>；贴进来即可预检与回填。</div>' +
+          '<textarea class="edits" id="editsBox" placeholder=\'{"pid":"p0004","text":"改写后的整段文字","op":"O2"}\'></textarea>' +
+          '<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap"><button class="btn small" id="lintBtn">预检</button><button class="btn small primary" id="applyBtn">回填并复检</button></div>' +
+          '<div id="lintOut"></div>' +
+          (SERVED ? "" : '<div class="notice">当前是静态快照：预检/回填需要在本地服务里操作，或把那两行命令复制回对话执行。</div>') +
+          '<div class="kv" style="margin-top:14px"><dt>提示词</dt><dd class="mono">' + esc(wb.promptsPath || "—") + '</dd><dt>清单</dt><dd class="mono">' + esc(wb.editsPath || "—") + '</dd></div>' +
+        '</div>' +
+      '</div>';
+
+    const instr = $("copyInstruction");
+    if (instr) instr.onclick = () => copy(wb.instruction || "", "作业说明已复制");
+    $("tasksBody").querySelectorAll("[data-copy-prompt]").forEach((el) => {
+      el.onclick = () => {
+        const row = prompts.find((x) => x.pid === el.dataset.copyPrompt);
+        if (row) copy(row.prompt || "", "提示词已复制");
+      };
+    });
+    const lintBtn = $("lintBtn");
+    if (lintBtn) lintBtn.onclick = doLint;
+    const applyBtn = $("applyBtn");
+    if (applyBtn) applyBtn.onclick = doApply;
+  }
+
+  async function doLint() {
+    const text = $("editsBox").value.trim();
+    if (!text) return toast("先把编辑清单贴进来");
+    const data = await api("/api/lint", { text });
+    if (!data || !data.ok) return;
+    const c = data.counts || {};
+    $("lintOut").innerHTML = '<div class="oknote">预检：可通过 <b>' + (c.would_apply || 0) + '</b> ｜ 会被拒 <b>' + (c.would_reject || 0) + '</b></div>' +
+      (data.rejected || []).map((x) => '<div class="notice"><b>' + esc(x.pid) + '</b> · ' + esc(x.reason || "") + '<br>' + esc(x.hint || "") + '</div>').join("");
+  }
+
+  async function doApply() {
+    const text = $("editsBox").value.trim();
+    if (!text) return toast("先把编辑清单贴进来");
+    const btn = $("applyBtn");
+    btn.disabled = true;
+    btn.textContent = "回填中…";
+    const data = await api("/api/apply", { text });
+    btn.disabled = false;
+    btn.textContent = "回填并复检";
+    if (!data || !data.ok) return;
+    const v = data.verdict || {};
+    const a = data.acceptance || {};
+    $("lintOut").innerHTML =
+      '<div class="' + (v.passed && !data.rolledBack ? "oknote" : "notice") + '">' +
+      '结构复检：<b>' + (v.passed ? "通过" : "未通过") + '</b> ｜ 改 ' + (v.changed || 0) + ' 段 ｜ 字数 ' + ((v.chars || [])[0] || "?") + ' → ' + ((v.chars || [])[1] || "?") +
+      '<br>AIGC 复检：' + (a.aigcChecked ? (a.accepted ? "通过" : "未通过") + " ｜ 正文 " + pct((data.prob || {}).before) + "% → " + pct((data.prob || {}).after) + "%" : "未执行（依赖未安装）") +
+      (data.rolledBack ? '<br>已回退到：' + esc(data.rolledBackTo || data.activeVersionId || "") : "") +
+      '</div>';
+  }
+
+  // ------------------------------------------------------------ diff
+  function renderDiff() {
+    const wb = state.workbench || {};
+    const cmp = wb.compare || { rows: [] };
+    if (!cmp.rows || !cmp.rows.length) {
+      $("diffBody").innerHTML = '<div class="empty"><b>还没有三栏对照</b>回填成功后，这里会逐段列出「原文 / 改文 / 字数与句数变化」。</div>';
+      return;
+    }
+    const rows = cmp.rows.map((r) => (
+      '<div class="diffrow"><div class="top"><span class="pid">' + esc(r.pid) + '</span><span class="op">' + esc(r.kind || "body") + '</span>' +
+      '<span style="margin-left:auto">' + (r.locked ? "锁定段（不改）" : "已改写") + '</span></div>' +
+      '<div class="diffcols"><div class="before">' + esc(r.before || "") + '</div><div class="after">' + esc(r.after || "") + '</div>' +
+      '<div class="delta"><span>字数 <b>' + r.chars[0] + '→' + r.chars[1] + '</b></span><span>句数 <b>' + r.sentences[0] + '→' + r.sentences[1] + '</b></span></div></div></div>'
+    )).join("");
+    $("diffBody").innerHTML =
+      '<div class="sechead"><h2>' + esc(cmp.baseVersionLabel || "原文") + ' → ' + esc(cmp.versionLabel || "") + '</h2>' +
+      '<span class="note">改了 ' + (cmp.count || 0) + ' 段 / 共 ' + (cmp.total || 0) + ' 段</span></div>' + rows;
+  }
+
+  // ------------------------------------------------------------ report
+  function renderReport() {
+    const md = (state.workbench && state.workbench.report) || "";
+    if (!md.trim()) {
+      $("reportBody").innerHTML = '<div class="empty"><b>还没有报告</b>诊断或回填后，引擎会把 report.md 放在产物目录里。</div>';
+      return;
+    }
+    $("reportBody").innerHTML = '<div class="sechead"><h2>诊断与复检报告</h2><button class="btn small" id="copyReport">复制 Markdown</button></div><div class="report">' + markdown(md) + '</div>';
+    const btn = $("copyReport");
+    if (btn) btn.onclick = () => copy(md, "报告已复制");
+  }
+
+  function inline(text) {
+    let s = esc(text);
+    s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+    s = s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+    return s;
+  }
+  function markdown(src) {
+    const lines = String(src).replace(/\r\n?/g, "\n").split("\n");
+    const out = [];
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      if (/^```/.test(line)) {
+        const buf = []; i++;
+        while (i < lines.length && !/^```/.test(lines[i])) buf.push(lines[i++]);
+        i++; out.push("<pre>" + esc(buf.join("\n")) + "</pre>"); continue;
+      }
+      const h = line.match(/^(#{1,4})\s+(.*)$/);
+      if (h) { const n = Math.min(4, h[1].length); out.push("<h" + n + ">" + inline(h[2]) + "</h" + n + ">"); i++; continue; }
+      if (/^\s*\|/.test(line) && i + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
+        const head = splitRow(line); i += 2; const body = [];
+        while (i < lines.length && /^\s*\|/.test(lines[i])) body.push(splitRow(lines[i++]));
+        out.push("<div class=\"tablewrap\"><table><thead><tr>" + head.map((c) => "<th>" + inline(c) + "</th>").join("") + "</tr></thead><tbody>" +
+          body.map((r) => "<tr>" + r.map((c) => "<td>" + inline(c) + "</td>").join("") + "</tr>").join("") + "</tbody></table></div>");
+        continue;
+      }
+      if (/^\s*[-*]\s+/.test(line)) {
+        const buf = [];
+        while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) buf.push(lines[i++].replace(/^\s*[-*]\s+/, ""));
+        out.push("<ul>" + buf.map((x) => "<li>" + inline(x) + "</li>").join("") + "</ul>"); continue;
+      }
+      if (/^\s*\d+\.\s+/.test(line)) {
+        const buf = [];
+        while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) buf.push(lines[i++].replace(/^\s*\d+\.\s+/, ""));
+        out.push("<ol>" + buf.map((x) => "<li>" + inline(x) + "</li>").join("") + "</ol>"); continue;
+      }
+      if (/^\s*>\s?/.test(line)) {
+        const buf = [];
+        while (i < lines.length && /^\s*>\s?/.test(lines[i])) buf.push(lines[i++].replace(/^\s*>\s?/, ""));
+        out.push("<blockquote>" + inline(buf.join("<br>")) + "</blockquote>"); continue;
+      }
+      if (!line.trim()) { i++; continue; }
+      const buf = [line]; i++;
+      while (i < lines.length && lines[i].trim() && !/^(#{1,4}\s|```|\s*[-*]\s|\s*\d+\.\s|\s*>|\s*\|)/.test(lines[i])) buf.push(lines[i++]);
+      out.push("<p>" + inline(buf.join(" ")) + "</p>");
+    }
+    return out.join("\n");
+  }
+  function splitRow(line) {
+    return line.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+  }
+
+  // ------------------------------------------------------------ boot
+  function activate(view) {
+    const btn = document.querySelector('#nav button[data-view="' + view + '"]');
+    if (!btn) return;
+    document.querySelectorAll("#nav button").forEach((b) => b.classList.remove("on"));
+    btn.classList.add("on");
+    document.querySelectorAll(".section").forEach((s) => s.classList.remove("on"));
+    const section = $("view-" + view);
+    if (section) section.classList.add("on");
+  }
+  document.querySelectorAll("#nav button").forEach((btn) => {
+    btn.onclick = () => {
+      activate(btn.dataset.view);
+      try { history.replaceState(null, "", "#" + btn.dataset.view); } catch (e) { /* file:// 下可能被拒 */ }
+    };
+  });
+  const initial = (location.hash || "").replace(/^#/, "");
+  if (["overview", "aigc", "tasks", "diff", "report"].includes(initial)) activate(initial);
+  if (SERVED) {
+    fetch("/api/state", { cache: "no-store" }).then((r) => r.json()).then((data) => { state = data; render(); }).catch(() => render());
+  } else {
+    render();
+  }
+})();
+</script>
+</body>
+</html>
