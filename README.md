@@ -1,5 +1,13 @@
 # 论文双降 · WorkBuddy 插件
 
+<p>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-1f4e79?style=flat-square"></a>
+  <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-3572A5?style=flat-square">
+  <a href="https://github.com/mount9527/WorkBuddy-paper-dual-reducer/releases"><img alt="latest release" src="https://img.shields.io/github/v/release/mount9527/WorkBuddy-paper-dual-reducer?style=flat-square&color=1f4e79"></a>
+  <img alt="WorkBuddy plugin" src="https://img.shields.io/badge/WorkBuddy%20plugin-1f4e79?style=flat-square">
+  <img alt="/plugin install paper-dual@paper-dual-workbuddy" src="https://img.shields.io/badge/%2Fplugin%20install-paper--dual%40paper--dual--workbuddy-555?style=flat-square">
+</p>
+
 > 诊断中文论文的 AI 文风与篇内重复，按段生成改写任务；模型只写 `edits.jsonl`，
 > 脚本负责预检、无损回填、复检与回退，并在本机生成一个可预览的工作台。
 
