@@ -204,7 +204,7 @@ python "<plugin>/host/paperdual.py" aigc --calibrate --json
 
 ```bash
 cd plugins/paper-dual
-python -m unittest discover -s tests -v     # 4 项端到端：诊断/任务/回填/回退/外部清单
+python -m unittest discover -s tests -v     # 10 项：4 项真实 CLI 端到端 + 6 项清单结构校验
 ```
 
 测试用 `tests/fixtures/sample.docx`，每次在临时目录里建独立状态，不碰真实数据。
