@@ -824,9 +824,11 @@ def model_cache_root() -> Path:
 
 def aigc_setup(det: dict | None = None) -> dict:
     det = det or {}
-    venv = os.environ.get("PAPER_DUAL_AIGC_HOME", r"E:\paper-dual-aigc")
+    venv = os.environ.get("PAPER_DUAL_AIGC_HOME", str(Path.home() / "paper-dual-aigc"))
     cache = load_config().get("hfCacheDir") or str(Path(venv) / "hf-cache")
     python = load_config().get("pythonPath") or str(Path(venv) / "Scripts" / "python.exe")
+    # 本机没有 py 启动器时（装的是独立 Python 或应用自带解释器），退回当前解释器建 venv
+    creator = "py -3.12 -m venv" if shutil.which("py") else f'& "{sys.executable}" -m venv'
     install = "\n".join(
         [
             f'$Venv = "{venv}"',
@@ -834,8 +836,8 @@ def aigc_setup(det: dict | None = None) -> dict:
             '$env:HF_ENDPOINT = "https://hf-mirror.com"',
             '$env:HF_HUB_DISABLE_XET = "1"',
             "New-Item -ItemType Directory -Force -Path $Venv,$Cache | Out-Null",
-            "py -3.12 -m venv --upgrade-deps $Venv",
-            '& "$Venv\\Scripts\\python.exe" -m pip install --upgrade pip',
+            f"{creator} $Venv",
+            '& "$Venv\\Scripts\\python.exe" -m pip install --upgrade pip --index-url https://pypi.mirrors.ustc.edu.cn/simple/',
             '& "$Venv\\Scripts\\python.exe" -m pip install torch==2.9.1 transformers==5.23.0 --index-url https://pypi.mirrors.ustc.edu.cn/simple/',
             '& "$Venv\\Scripts\\python.exe" -c "import torch, transformers; print(torch.__version__, transformers.__version__)"',
         ]

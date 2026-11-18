@@ -173,10 +173,10 @@ python "<plugin>/host/paperdual.py" aigc --calibrate --json   # 首次方向标�
 ```
 
 没装依赖时返回 `AIGC_DEPS_MISSING` 和 `setup.installScript`（PowerShell，含国内镜像）。
-装好后：
+默认 venv 在 `%USERPROFILE%\paper-dual-aigc`；`setup.manualSteps` 里已抄好真实路径的两条 config 命令。装好后：
 
 ```bash
-python "<plugin>/host/paperdual.py" config --python "E:\paper-dual-aigc\Scripts\python.exe" --hf-cache "E:\paper-dual-aigc\hf-cache"
+python "<plugin>/host/paperdual.py" config --python "%USERPROFILE%\paper-dual-aigc\Scripts\python.exe" --hf-cache "%USERPROFILE%\paper-dual-aigc\hf-cache"
 ```
 
 首次打分/标定会联网下载约 409MB 权重（不随插件分发）。**任何情况下都不要展示或编造未经模型计算的分数。**

@@ -136,10 +136,11 @@ python "<plugin>/host/paperdual.py" aigc --json
 ```
 
 未安装依赖时返回 `AIGC_DEPS_MISSING` 和一整套 PowerShell 安装命令（含国内镜像），
-**不会生成也不会显示任何分数**。安装后：
+**不会生成也不会显示任何分数**。默认 venv 在 `%USERPROFILE%\paper-dual-aigc`，
+`aigc --json` 的 `setup.manualSteps` 会把两条配置命令连同真实路径抄好，照抄即可。安装后：
 
 ```bash
-python "<plugin>/host/paperdual.py" config --python "E:\paper-dual-aigc\Scripts\python.exe" --hf-cache "E:\paper-dual-aigc\hf-cache"
+python "<plugin>/host/paperdual.py" config --python "%USERPROFILE%\paper-dual-aigc\Scripts\python.exe" --hf-cache "%USERPROFILE%\paper-dual-aigc\hf-cache"
 python "<plugin>/host/paperdual.py" aigc --calibrate --json
 ```
 
