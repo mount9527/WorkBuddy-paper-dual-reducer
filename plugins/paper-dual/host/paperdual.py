@@ -533,6 +533,17 @@ def doc_json_path(doc: dict, version: dict) -> Path | None:
     return fallback if fallback.is_file() else None
 
 
+def version_chars(version: dict) -> int | None:
+    """这一版当前正文的字数：回填过的看 check-current，没回填的看该版基础 doc.json。"""
+    workdir = Path(version["workdir"])
+    for path in (workdir / "check-current" / "doc.json", workdir / "doc.json"):
+        if path.is_file():
+            stats = (read_json(path, {}) or {}).get("stats") or {}
+            if stats.get("chars") is not None:
+                return int(stats["chars"])
+    return None
+
+
 def ensure_doc_json(doc: dict, version: dict) -> Path:
     existing = doc_json_path(doc, version)
     if existing:
@@ -1794,6 +1805,7 @@ def build_status(raw: str | None = None) -> dict:
         },
         "active": {
             **public_version(doc, active),
+            "chars": version_chars(active),
             "hints": active.get("hints"),
             "focus": active.get("focus") or [],
             "lint": active.get("lint"),

@@ -417,7 +417,7 @@
         statCard("可改写段落", stats.rewritable == null ? "—" : stats.rewritable, "共 " + (stats.paragraphs || "—") + " 段，锁定 " + (stats.locked || "—")) +
         statCard("高风险段", high, "中 " + mid + " · 低 " + low + (active.id !== "original" ? " · 原文诊断口径" : "")) +
         statCard("篇内重复率", dupValue, dupHint) +
-        statCard("正文字数", stats.chars == null ? "—" : stats.chars, "可改写 " + (stats.rewritable_chars || "—") + " 字") +
+        statCard("正文字数", (active.id !== "original" && active.chars != null ? active.chars : (stats.chars == null ? "—" : stats.chars)), "可改写 " + (stats.rewritable_chars || "—") + " 字" + (active.id !== "original" && active.chars != null ? " · 原文 " + stats.chars : "")) +
       '</div>' +
       '<div class="grid g2" style="margin-bottom:14px">' +
         '<div class="card"><h3>风险分布</h3>' +
@@ -459,12 +459,12 @@
     const cells = dims.map(([k, label]) => {
       const item = (result || {})[k] || {};
       const bad = item.risk || item.gate_failed || (k === "burstiness" && item.level === "low");
-      const metric = item.count != null ? item.count + " 处" : item.level ? "等级 " + item.level : item.score != null ? "分 " + num(item.score) : "";
+      const metric = item.count != null ? item.count + " 处" : item.level ? "等级 " + (LEVEL[item.level] || item.level) : item.score != null ? "分 " + num(item.score) : "";
       return '<div class="dim ' + (bad ? "bad" : "ok") + '"><div class="n"><i class="dot" style="background:' + (bad ? "var(--high)" : "var(--low)") + '"></i>' + label + '</div><div class="m">' + esc(metric || (bad ? "需改写" : "正常")) + '</div></div>';
     }).join("");
     const todo = (result && result.todo || []).map((t) => "<li>" + esc(t) + "</li>").join("");
     return '<div class="dims">' + cells + '</div>' +
-      '<div class="legend" style="margin-top:10px"><span>风险 <b>' + (result && result.risk_count != null ? result.risk_count : "—") + '</b> 项</span><span>等级 <b>' + esc((result && result.level) || "—") + '</b></span><span>语体门禁 <b>' + (gate ? "通过" : "未通过") + '</b></span></div>' +
+      '<div class="legend" style="margin-top:10px"><span>风险 <b>' + (result && result.risk_count != null ? result.risk_count : "—") + '</b> 项</span><span>等级 <b>' + esc((result && LEVEL[result.level]) || (result && result.level) || "—") + '</b></span><span>语体门禁 <b>' + (gate ? "通过" : "未通过") + '</b></span></div>' +
       (todo ? '<ul class="todo">' + todo + '</ul>' : "");
   }
 
@@ -638,7 +638,10 @@
       $("reportBody").innerHTML = '<div class="empty"><b>还没有报告</b>诊断或回填后，引擎会把 report.md 放在产物目录里。</div>';
       return;
     }
-    $("reportBody").innerHTML = '<div class="sechead"><h2>诊断与复检报告</h2><button class="btn small" id="copyReport">复制 Markdown</button></div><div class="report">' + markdown(md) + '</div>';
+    $("reportBody").innerHTML = '<div class="sechead"><h2>诊断与复检报告</h2><button class="btn small" id="copyReport">复制 Markdown</button></div>' +
+      '<div style="font-size:11.5px;color:var(--muted);margin:-6px 0 12px;line-height:1.7">第一节「文档概览」是诊断时原文的基线；改写后的变化看第七节「改写对照」与第八节「复检结论」，' +
+      '篇内重复率的前后对比在概览页的复检卡里。</div>' +
+      '<div class="report">' + markdown(md) + '</div>';
     const btn = $("copyReport");
     if (btn) btn.onclick = () => copy(md, "报告已复制");
   }
