@@ -1,21 +1,21 @@
 # 第三方组件与许可
 
-本仓库自身代码为 MIT（见 `LICENSE`）。以下组件按原许可证随插件分发。
+本仓库自身代码为 MIT（见 `LICENSE`）。以下组件按原许可证随技能分发。
 
 ## 1. paper-dual-reduce 引擎
 
-- 位置：`plugins/paper-dual/engine/`
+- 位置：`skills/paper-dual/engine/`
 - 来源：https://github.com/mount9527/skill-paper-dual-reducer
-- 许可：MIT（`plugins/paper-dual/engine/LICENSE`）
+- 许可：MIT（`skills/paper-dual/engine/LICENSE`）
 - 版权：Copyright (c) 2026 paper-dual-reduce contributors
 - 说明：负责 docx 解析、六维诊断、排期、提示词构建、回填、篇级校验与报告。
-  本插件未修改其算法逻辑；入口仍是 `run.py`，子命令与产物保持一致。
+  本技能未修改其算法逻辑；入口仍是 `run.py`，子命令与产物保持一致。
 
 ## 2. AIGC 考官
 
-- 位置：`plugins/paper-dual/aigc/`
+- 位置：`skills/paper-dual/aigc/`
 - 来源：https://github.com/mount9527/paper-dual-reducer（`aigc/` 目录）
-- 许可：MIT（`plugins/paper-dual/aigc/LICENSE`）
+- 许可：MIT（`skills/paper-dual/aigc/LICENSE`）
 - 版权：Copyright (c) 2026 mount9527
 - 说明：`detector.py`（模型打分）、`diag.py`（9 维痕迹，纯正则）、`segscore.py`（逐块打分）、
   `segdiag.py`（逐段痕迹）、`bands.py` / `blocking.py` / `calib.json`（档位、冻结块、校准）。

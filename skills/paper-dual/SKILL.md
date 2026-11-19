@@ -3,7 +3,9 @@ name: paper-dual
 description: Diagnose and rewrite Chinese academic papers (.doc/.docx) to lower AI-style statistical fingerprints and in-document repetition, with byte-level Word formatting fidelity. Use when the user asks to 降 AIGC 味 / 去 AI 味 / 降重 / 降重复率 / 润色论文但保留原格式, or asks which paragraphs read like AI wrote them.
 description_zh: 诊断并定向改写中文论文 .doc/.docx，降低 AI 写作痕迹与篇内重复，保留表格、公式、引用与 Word 格式。适用于降 AIGC 味、降重、按段改写并回填，以及在本机生成可预览的工作台。
 description_en: Diagnose and rewrite Chinese academic .docx files to reduce AI-style fingerprints and in-document repetition, with formatting fidelity. Use for de-AI rewriting, repetition reduction, section-level revision, and a local workbench.
-version: "1.0.0"
+version: "1.1.0"
+license: MIT
+agent_created: true
 ---
 
 # 论文双降（降 AIGC 味 / 降篇内重复）
@@ -24,7 +26,7 @@ version: "1.0.0"
 ## 什么时候不用
 
 - **不承诺检测结果**。输出是篇内相对风险分，不是任何平台的检测概率。用户问「能降到多少」「能过知网吗」，
-  只能回答：无法预测，本工具只做表达层优化。
+  只能回答：无法预测，本技能只做表达层优化。
 - 不接「代写」「补数据」「编文献」。改写必须逐句可追溯回原文。
 - 不做全文查重（无外部语料授权），只做篇内重复。
 - 不支持 PDF、扫描件、图片；`.doc` 会自动转 `.docx` 副本，原文件不动。
@@ -32,11 +34,11 @@ version: "1.0.0"
 
 ## 找到 CLI
 
-本文件位于 `<plugin>/skills/paper-dual/SKILL.md`，宿主 CLI 在 `<plugin>/host/paperdual.py`。
-先解析出**绝对路径**再调用，Windows 路径要加引号：
+本文件所在目录就是**技能根**（安装后通常是 `%USERPROFILE%\.workbuddy\skills\paper-dual`）。
+下文用 `<skill>` 指代这个绝对路径，先解析出来再调用，Windows 路径要加引号：
 
 ```bash
-python "<plugin>/host/paperdual.py" doctor --json
+python "<skill>/host/paperdual.py" doctor --json
 ```
 
 解释器优先用 `python`；没有就试 `py -3`。需要 Python ≥ 3.10，引擎零第三方依赖。
@@ -47,7 +49,7 @@ python "<plugin>/host/paperdual.py" doctor --json
 ### 0. 自检（每个会话一次）
 
 ```bash
-python "<plugin>/host/paperdual.py" doctor --json
+python "<skill>/host/paperdual.py" doctor --json
 ```
 
 `AIGC 真机依赖` 为 false 不影响诊断、改写、回填；只影响 AI 疑似占比。**不要**因为这一项失败就停下。
@@ -55,7 +57,7 @@ python "<plugin>/host/paperdual.py" doctor --json
 ### 1. 诊断（只读原文件）
 
 ```bash
-python "<plugin>/host/paperdual.py" diagnose --in "<论文绝对路径>" --json
+python "<skill>/host/paperdual.py" diagnose --in "<论文绝对路径>" --json
 ```
 
 返回风险分布、可改写/锁定段数、篇内重复率、Top 12 段落、报告路径。
@@ -64,7 +66,7 @@ python "<plugin>/host/paperdual.py" diagnose --in "<论文绝对路径>" --json
 诊断后立刻生成工作台并展示给用户：
 
 ```bash
-python "<plugin>/host/paperdual.py" workbench --json
+python "<skill>/host/paperdual.py" workbench --json
 ```
 
 把返回的 `path` 用 `present_files` 打开。静态工作台只读，够用；需要点按钮操作时才用 `serve`。
@@ -82,7 +84,7 @@ python "<plugin>/host/paperdual.py" workbench --json
 ### 3. 生成改写任务
 
 ```bash
-python "<plugin>/host/paperdual.py" plan --scope aigc --json
+python "<skill>/host/paperdual.py" plan --scope aigc --json
 ```
 
 返回 `versionId`（v1）、`tasks`、`prompts`、`promptsPath`、`editsPath`、`instruction`、`hints`、`focus`。
@@ -93,7 +95,7 @@ python "<plugin>/host/paperdual.py" plan --scope aigc --json
 分批取提示词，每批 4–6 段：
 
 ```bash
-python "<plugin>/host/paperdual.py" prompts --json --limit 6 --skip 0
+python "<skill>/host/paperdual.py" prompts --json --limit 6 --skip 0
 ```
 
 返回的 `system` 是共享系统提示，`rows[]` 每项有 `pid`、`op`、`opName`、`minChars`、`maxChars`、`sentences`、`prompt`。
@@ -116,7 +118,7 @@ python "<plugin>/host/paperdual.py" prompts --json --limit 6 --skip 0
 ### 5. 回填 + 复检
 
 ```bash
-python "<plugin>/host/paperdual.py" apply --json
+python "<skill>/host/paperdual.py" apply --json
 ```
 
 它会：预检 → 回填 → 篇级格式/实体校验 → 篇内重复率复检 →（依赖就绪时）冻结块 AIGC 复检 → 不通过则回退。
@@ -138,18 +140,43 @@ python "<plugin>/host/paperdual.py" apply --json
 ### 6. 展示结果
 
 ```bash
-python "<plugin>/host/paperdual.py" compare --json        # 三栏对照数据
-python "<plugin>/host/paperdual.py" workbench --json      # 重新生成工作台
-python "<plugin>/host/paperdual.py" export --version v1 --out "<目标.docx>" --json
+python "<skill>/host/paperdual.py" compare --json        # 三栏对照数据
+python "<skill>/host/paperdual.py" workbench --json      # 重新生成工作台
+python "<skill>/host/paperdual.py" export --version v1 --out "<目标.docx>" --json
 ```
 
 用 `present_files` 打开工作台和导出的 docx。工作台里有概览、AIGC 考官、任务与清单、三栏对照、报告五屏。
+
+## 按用户意图分流
+
+用户只提其中一环时，直接读对应流程文档，不要从头跑一遍：
+
+| 用户说法 | 读这一份 | 做什么 |
+|---|---|---|
+| 「诊断一下」「哪里像 AI」「重复率多少」 | `references/flows/diagnose.md` | 自检 → `diagnose` → 工作台 → 汇报 Top 3 |
+| 「帮我改」「降 AIGC 味」「降重」 | `references/flows/rewrite.md` | 定 scope → `plan` → 分批改写 → `apply` |
+| 「把改稿贴回去」「回填」「复检」 | `references/flows/apply.md` | `apply` → 逐项汇报 → 导出 |
+| 「打开工作台」「面板」「看对照」 | `references/flows/workbench.md` | `workbench` 或 `serve` |
+
+首次接触一篇论文、或用户只说了「帮我把这篇降一降」，按上面「标准流程」一次走完，不要中途反复问。
 
 ## 多轮续改
 
 - 改稿未达标、用户想继续：`plan --base v1 --scope aigc` 生成 v2（`--base` 省略时用当前版本）。
 - 第三轮起自动转「少量高风险段定向续改」：任务上限递减为 5/3/2，提示词只保留前 6 条最关键要求。
 - 达到 v5 后不能再生成；只能重新诊断或换文件。
+
+## 批量改写（可选，context 隔离）
+
+段落多（单轮 > 12 段）或上下文已经很长时，把改写派给子代理，自己只保留调度：
+
+1. 先 `plan` 与 `prompts --limit 6 --skip 0` 确认能跑通；
+2. 用子代理（`Agent`，`general-purpose`）派活，prompt 模板见 `references/rewriter-prompt.md`，
+   必须传：CLI 绝对路径、版本 id、`skip`/`limit`、`editsPath`；
+3. 子代理只写 `edits.jsonl` 并回报 pid 清单，**不要**让它跑 `apply`；
+4. 收齐后由主会话执行 `apply`，再统一汇报。
+
+段数不多时不要派子代理：自己分批写更快，也少一层丢失上下文的成本。
 
 ## 常见失败与处理
 
@@ -163,29 +190,29 @@ python "<plugin>/host/paperdual.py" export --version v1 --out "<目标.docx>" --
 | `E_CONVERT` | `.doc` 转不了 `.docx` | 让用户先在 Word 里另存为 `.docx` |
 | `E_BASE` | 基础版还没有 docx | 先 `apply` 出上一版，再续改 |
 | `AIGC_DEPS_MISSING` | 没装 torch + transformers | 给安装步骤，**不要编分数**，可先按结构验收走 |
-| `engine 缺失` | 插件安装不完整 | 重新安装插件，不要改引擎源码 |
+| `engine 缺失` | 技能目录不完整 | 重新安装技能，不要改引擎源码 |
 
 ## AIGC 考官（可选）
 
 ```bash
-python "<plugin>/host/paperdual.py" aigc --json               # 占比 + 9 维
-python "<plugin>/host/paperdual.py" aigc --calibrate --json   # 首次方向标定
+python "<skill>/host/paperdual.py" aigc --json               # 占比 + 9 维
+python "<skill>/host/paperdual.py" aigc --calibrate --json   # 首次方向标定
 ```
 
 没装依赖时返回 `AIGC_DEPS_MISSING` 和 `setup.installScript`（PowerShell，含国内镜像）。
 默认 venv 在 `%USERPROFILE%\paper-dual-aigc`；`setup.manualSteps` 里已抄好真实路径的两条 config 命令。装好后：
 
 ```bash
-python "<plugin>/host/paperdual.py" config --python "%USERPROFILE%\paper-dual-aigc\Scripts\python.exe" --hf-cache "%USERPROFILE%\paper-dual-aigc\hf-cache"
+python "<skill>/host/paperdual.py" config --python "%USERPROFILE%\paper-dual-aigc\Scripts\python.exe" --hf-cache "%USERPROFILE%\paper-dual-aigc\hf-cache"
 ```
 
-首次打分/标定会联网下载约 409MB 权重（不随插件分发）。**任何情况下都不要展示或编造未经模型计算的分数。**
+首次打分/标定会联网下载约 409MB 权重（不随技能分发）。**任何情况下都不要展示或编造未经模型计算的分数。**
 
 ## 工作台
 
 ```bash
-python "<plugin>/host/paperdual.py" workbench --json    # 静态 HTML，present_files 打开
-python "<plugin>/host/paperdual.py" serve --port 8760   # 本地服务，可点按钮预检/回填
+python "<skill>/host/paperdual.py" workbench --json    # 静态 HTML，present_files 打开
+python "<skill>/host/paperdual.py" serve --port 8760   # 本地服务，可点按钮预检/回填
 ```
 
 `serve` 只监听 `127.0.0.1`，不开远端。静态版是只读快照；需要交互时再用 `serve`，
@@ -194,16 +221,22 @@ python "<plugin>/host/paperdual.py" serve --port 8760   # 本地服务，可点�
 ## 口径与红线
 
 - 风险分是**篇内相对指标**，只用于同篇排序，跨文档不可比，**不是任何平台的检测概率**。
-- AIGC 考官给的是**本工具自有口径下的正文 AI 疑似占比**，不等于知网/维普/格子达的判定，也不与任何第三方平台横比。
+- AIGC 考官给的是**本技能自有口径下的正文 AI 疑似占比**，不等于知网/维普/格子达的判定，也不与任何第三方平台横比。
 - 不模拟任何平台，不承诺通过率。
 - 标题、表格、代码块、公式、脚注、参考文献一律不改；不新增数字/引用/主观表述。
 - 改稿必须由作者复核。
 
-## 参考
+## 文件地图
 
-- `references/gates.md`：六道闸门与验收矩阵（什么时候会被拒、怎么改）
-- `references/operators.md`：九个改写算子的适用条件与风险
-- `references/thresholds.md`：全部阈值与取值理由
-- `references/compliance.md`：红线与交付话术
-- `engine/`：解析/诊断/排期/提示词/回填/复检引擎（MIT）
-- `aigc/`：AIGC 考官与 9 维诊断（MIT；模型权重不随插件分发）
+| 路径 | 用途 |
+|---|---|
+| `host/paperdual.py` | 宿主 CLI，JSON 进 JSON 出；所有操作从这里进 |
+| `engine/` | 解析/诊断/排期/提示词/回填/复检引擎（MIT） |
+| `aigc/` | AIGC 考官与 9 维诊断（MIT；模型权重不随技能分发） |
+| `references/gates.md` | 六道闸门与验收矩阵（什么时候会被拒、怎么改） |
+| `references/operators.md` | 九个改写算子的适用条件与风险 |
+| `references/thresholds.md` | 全部阈值与取值理由 |
+| `references/compliance.md` | 红线与交付话术 |
+| `references/flows/` | 四个单项流程（诊断/改写/回填/工作台） |
+| `references/rewriter-prompt.md` | 派给子代理做批量改写时的 prompt 模板 |
+| `tests/` | 结构与 CLI 自检；`python -m unittest discover tests` |

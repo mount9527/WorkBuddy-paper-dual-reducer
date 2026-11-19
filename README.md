@@ -1,11 +1,11 @@
-# 论文双降 · WorkBuddy 插件
+# 论文双降 · WorkBuddy 技能
 
 <p>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-1f4e79?style=flat-square"></a>
   <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-3572A5?style=flat-square">
   <a href="https://github.com/mount9527/WorkBuddy-paper-dual-reducer/releases"><img alt="latest release" src="https://img.shields.io/github/v/release/mount9527/WorkBuddy-paper-dual-reducer?style=flat-square&color=1f4e79"></a>
-  <img alt="WorkBuddy plugin" src="https://img.shields.io/badge/WorkBuddy%20plugin-1f4e79?style=flat-square">
-  <img alt="/plugin install paper-dual@paper-dual-workbuddy" src="https://img.shields.io/badge/%2Fplugin%20install-paper--dual%40paper--dual--workbuddy-555?style=flat-square">
+  <img alt="WorkBuddy skill" src="https://img.shields.io/badge/WorkBuddy%20skill-1f4e79?style=flat-square">
+  <img alt="install to ~/.workbuddy/skills" src="https://img.shields.io/badge/install-%7E%2F.workbuddy%2Fskills-555?style=flat-square">
 </p>
 
 > 诊断中文论文的 AI 文风与篇内重复，按段生成改写任务；模型只写 `edits.jsonl`，
@@ -14,59 +14,59 @@
 ![工作台：概览与风险](docs/workbench.png)
 
 这是 [paper-dual-reducer](https://github.com/mount9527/paper-dual-reducer)（DSH 插件）的
-**WorkBuddy 重写版**：不是把 DSH 插件改名搬过来，而是按 WorkBuddy 的插件模型重新做了一层——
-左边栏面板换成技能 + 命令 + 子代理 + 本机工作台，Cordis 宿主路由换成独立 CLI 与本地服务。
+**WorkBuddy 重写版**：不是把 DSH 插件改名搬过来，而是按 WorkBuddy 的技能模型重新做了一层——
+对话里触发技能，CLI 与引擎放在技能目录里，工作台生成为本机 HTML。
 
-| | DSH 版 | 本插件（WorkBuddy） |
+| | DSH 版 | 本技能（WorkBuddy） |
 |---|---|---|
-| 入口 | 左侧栏 React 面板 | 对话里的技能 / 四个命令 / 工作台 HTML |
+| 入口 | 左侧栏 React 面板 | 对话里触发技能（说「降 AIGC 味」「降重」即可） |
 | 宿主工具 | `ctx.tools.register` 五个工具 | `host/paperdual.py` 子命令，JSON 进 JSON 出 |
 | 宿主路由 | Cordis `webServer` 前缀路由 | 静态工作台 + 可选 `serve`（127.0.0.1） |
 | 状态 | `~/.dsh/paper-dual` | `~/.workbuddy/paper-dual` |
-| 引擎 | 外置目录，需手动配置 | 内置在插件里，装完即用 |
+| 引擎 | 外置目录，需手动配置 | 内置在技能里，装完即用 |
 | AIGC 未装依赖 | 回填被判失败并回退 | 结构验收照常通过，明确标注「AIGC 未复检」 |
 | 面板与工作台 | 左栏常驻，可拖拽上传 | 生成 HTML 产物，`present_files` 预览；需要点按钮时开本地服务 |
 
 引擎（`engine/`）与 AIGC 考官（`aigc/`）是 MIT 授权的独立组件，按原样内置；
-宿主层、工作台、技能、命令、子代理是为 WorkBuddy 新写的。
+技能说明、流程文档、宿主层、工作台是为 WorkBuddy 新写的。
 
 ## 装之前
 
 - **Python ≥ 3.10**（引擎零第三方依赖，只要有标准库）。
 - `.doc` 自动转 `.docx`：优先 LibreOffice，其次 Windows 上的 Word COM；都不行时请用户先另存为 `.docx`。
-- AIGC 考官（可选）：`torch + transformers`，装在一个单独的 venv 里即可，插件会通过 `config --python` 指向它。
+- AIGC 考官（可选）：`torch + transformers`，装在一个单独的 venv 里即可，技能会通过 `config --python` 指向它。
   没装也能诊断、改写、回填，只是不算「AI 疑似占比」。
 
 ## 安装
 
-插件走 WorkBuddy 的插件市场分发，仓库根目录就是市场（`.codebuddy-plugin/marketplace.json`），
-插件在 `plugins/paper-dual/`。
+技能的分发就是「一个目录」：把 `skills/paper-dual/` 放进 WorkBuddy 的用户技能目录即可，
+没有市场、没有插件注册、没有 `/plugin install`。
+
+**方式一：git clone（推荐，升级靠 `git pull`）**
 
 ```bash
-# 1) 添加市场
-/plugin marketplace add mount9527/WorkBuddy-paper-dual-reducer
-
-# 2) 安装插件
-/plugin install paper-dual@paper-dual-workbuddy
-
-# 3) 重新加载
-/reload-plugins
+git clone https://github.com/mount9527/WorkBuddy-paper-dual-reducer.git "$HOME/.workbuddy/skills/paper-dual"
 ```
 
-> 中间那个 `@paper-dual-workbuddy` 是**市场 id**，取自 `.codebuddy-plugin/marketplace.json` 的
-> `name` 字段，和仓库名无关——仓库叫 `WorkBuddy-paper-dual-reducer`，市场 id 仍叫
-> `paper-dual-workbuddy`。按上面原样复制即可。
+Windows PowerShell 里写成：
 
-本地开发（改代码即时生效）：
-
-```bash
-/plugin marketplace add "D:\path\to\WorkBuddy-paper-dual-reducer"
-/plugin install paper-dual@paper-dual-workbuddy
-/reload-plugins
+```powershell
+git clone https://github.com/mount9527/WorkBuddy-paper-dual-reducer.git "$env:USERPROFILE\.workbuddy\skills\paper-dual"
 ```
 
-装完侧栏会出现技能 `paper-dual`，命令为 `/paper-dual:diagnose`、`/paper-dual:rewrite`、
-`/paper-dual:apply`、`/paper-dual:workbench`，子代理为 `paper-dual-rewriter`。
+**方式二：下载 zip**
+
+从 [Releases](https://github.com/mount9527/WorkBuddy-paper-dual-reducer/releases) 下 `paper-dual.zip`，
+解压到 `%USERPROFILE%\.workbuddy\skills\`，确认最终路径是
+`...\.workbuddy\skills\paper-dual\SKILL.md`（不要多套一层目录）。
+
+装完新开一个会话（或重启 WorkBuddy），技能列表里出现「论文双降 / paper-dual」即生效。
+之后直接在对话里说要做的事，不用记命令。
+
+本地开发：直接改 `skills/paper-dual/` 里的文件，新开会话就生效（技能是目录直读，不像插件那样拷贝到 cache）。
+
+> v1.0.0 曾是**插件形态**（`/plugin marketplace add` + `/plugin install`）。仓库已改为技能分发，
+> 需要旧插件版请 `git checkout v1.0.0`；那条路不再维护。
 
 ## 30 秒上手
 
@@ -79,13 +79,13 @@
 也可以逐步来：
 
 ```bash
-python "<plugin>/host/paperdual.py" doctor --json
-python "<plugin>/host/paperdual.py" diagnose --in "D:\论文\xxx.docx" --json
-python "<plugin>/host/paperdual.py" plan --scope aigc --json
-python "<plugin>/host/paperdual.py" prompts --limit 6 --skip 0 --json
+python "<skill>/host/paperdual.py" doctor --json
+python "<skill>/host/paperdual.py" diagnose --in "D:\论文\xxx.docx" --json
+python "<skill>/host/paperdual.py" plan --scope aigc --json
+python "<skill>/host/paperdual.py" prompts --limit 6 --skip 0 --json
 #   ← 模型按 prompts 写 edits.jsonl
-python "<plugin>/host/paperdual.py" apply --json
-python "<plugin>/host/paperdual.py" workbench --json
+python "<skill>/host/paperdual.py" apply --json
+python "<skill>/host/paperdual.py" workbench --json
 ```
 
 ## 七步演示
@@ -110,7 +110,8 @@ python "<plugin>/host/paperdual.py" workbench --json
 ![步骤 3：生成改写任务](docs/images/step3-generate-tasks.png)
 
 **4. 复制整段提示词** —— 展开任一段即得【本轮目标】【改动幅度】【原文】【约束】
-（字数区间、句数上限、锁片原文），整段丢给模型或 `paper-dual-rewriter` 子代理即可。
+（字数区间、句数上限、锁片原文），整段丢给模型即可；段数多时可以派给子代理批量写，
+prompt 模板见 `references/rewriter-prompt.md`。
 
 ![步骤 4：复制整段提示词](docs/images/step4-copy-prompt.png)
 
@@ -160,8 +161,8 @@ python "<plugin>/host/paperdual.py" workbench --json
 ## 工作台
 
 ```bash
-python "<plugin>/host/paperdual.py" workbench --json   # 生成静态 HTML
-python "<plugin>/host/paperdual.py" serve --port 8760  # 本地服务，可点按钮
+python "<skill>/host/paperdual.py" workbench --json   # 生成静态 HTML
+python "<skill>/host/paperdual.py" serve --port 8760  # 本地服务，可点按钮
 ```
 
 五屏：概览与风险、AIGC 考官、改写任务、三栏对照、报告。
@@ -178,7 +179,7 @@ python "<plugin>/host/paperdual.py" serve --port 8760  # 本地服务，可点�
 ## AIGC 考官（可选）
 
 ```bash
-python "<plugin>/host/paperdual.py" aigc --json
+python "<skill>/host/paperdual.py" aigc --json
 ```
 
 未安装依赖时返回 `AIGC_DEPS_MISSING` 和一整套 PowerShell 安装命令（含国内镜像），
@@ -186,11 +187,11 @@ python "<plugin>/host/paperdual.py" aigc --json
 `aigc --json` 的 `setup.manualSteps` 会把两条配置命令连同真实路径抄好，照抄即可。安装后：
 
 ```bash
-python "<plugin>/host/paperdual.py" config --python "%USERPROFILE%\paper-dual-aigc\Scripts\python.exe" --hf-cache "%USERPROFILE%\paper-dual-aigc\hf-cache"
-python "<plugin>/host/paperdual.py" aigc --calibrate --json
+python "<skill>/host/paperdual.py" config --python "%USERPROFILE%\paper-dual-aigc\Scripts\python.exe" --hf-cache "%USERPROFILE%\paper-dual-aigc\hf-cache"
+python "<skill>/host/paperdual.py" aigc --calibrate --json
 ```
 
-首次标定会联网下载约 409MB 的 `pytorch_model.bin`（模型权重不随插件分发）。
+首次标定会联网下载约 409MB 的 `pytorch_model.bin`（模型权重不随技能分发）。
 主指标是「可改写正文的 AI 疑似占比」，表格、参考文献、锁定区分开统计；
 首版生成 `block-plan.json`，之后所有版本都用同一份冻结块比较。
 
@@ -212,7 +213,7 @@ python "<plugin>/host/paperdual.py" aigc --calibrate --json
 `PAPER_DUAL_STATE_DIR` 可把整个状态目录重定向到别的磁盘。
 产物按「文档路径哈希」隔离，最近 12 篇各自保留；重新诊断同一路径时旧产物进 `archive/`。
 
-## 命令参考
+## CLI 参考
 
 | 命令 | 作用 |
 |---|---|
@@ -236,8 +237,8 @@ python "<plugin>/host/paperdual.py" aigc --calibrate --json
 
 ## 与 DSH 版的行为差异
 
-1. **没有常驻左栏面板**。WorkBuddy 插件不做自定义侧栏，改成「对话驱动 + 工作台产物」。
-2. **引擎内置**。DSH 版要手动配 `PAPER_DUAL_ENGINE`；这里 `engine/` 随插件走，没有「引擎目录里没有 run.py」。
+1. **没有常驻左栏面板**。WorkBuddy 技能不做自定义侧栏，改成「对话驱动 + 工作台产物」。
+2. **引擎内置**。DSH 版要手动配 `PAPER_DUAL_ENGINE`；这里 `engine/` 随技能走，没有「引擎目录里没有 run.py」。
 3. **`.doc` 转换内置**。仍然优先 LibreOffice，其次 Word COM。
 4. **AIGC 未装依赖时不回退**。DSH 版把「无法复检」判为失败并回退；这里结构验收通过就保留，
    但 `acceptance.aigcChecked = false`、状态标为未复检——不伪造通过，也不拿缺少的证据回退。
@@ -258,32 +259,39 @@ python "<plugin>/host/paperdual.py" aigc --calibrate --json
 ## 开发与测试
 
 ```bash
-cd plugins/paper-dual
-python -m unittest discover -s tests -v     # 10 项：4 项真实 CLI 端到端 + 6 项清单结构校验
+cd skills/paper-dual
+python -m unittest discover -s tests -v     # 13 项：4 项真实 CLI 端到端 + 9 项技能结构校验
 ```
 
 测试用 `tests/fixtures/sample.docx`，每次在临时目录里建独立状态，不碰真实数据。
+改完可直接用官方校验器过一遍：
 
-插件结构（WorkBuddy 规范）：
+```bash
+python "<skill-creator>/scripts/quick_validate.py" skills/paper-dual   # Skill is valid!
+```
+
+技能结构：
 
 ```text
-WorkBuddy-paper-dual-reducer/         # 市场根（仓库根）
-├─ .codebuddy-plugin/marketplace.json
-└─ plugins/paper-dual/                # 插件根
-   ├─ .codebuddy-plugin/plugin.json
-   ├─ skills/paper-dual/SKILL.md      # 主技能（渐进披露）
-   ├─ commands/*.md                   # /paper-dual:diagnose 等
-   ├─ agents/paper-dual-rewriter.md   # 批量改写子代理
-   ├─ host/paperdual.py               # 宿主层（CLI + 本地服务）
-   ├─ host/workbench.html             # 工作台单文件模板
-   ├─ engine/                         # 诊断/改写/回填/复检引擎（MIT）
-   ├─ aigc/                           # AIGC 考官与 9 维诊断（MIT）
-   └─ tests/
+WorkBuddy-paper-dual-reducer/           # 仓库根（也是技能的分发单位）
+├─ docs/                                # 演示图（不随技能安装）
+├─ skills/paper-dual/                   # 技能根 → 复制/克隆到 ~/.workbuddy/skills/paper-dual
+│  ├─ SKILL.md                          # 主说明（渐进披露）
+│  ├─ references/
+│  │  ├─ flows/                         # 四个单项流程：诊断/改写/回填/工作台
+│  │  ├─ rewriter-prompt.md             # 批量改写派活模板
+│  │  └─ gates / operators / thresholds / compliance
+│  ├─ host/paperdual.py                 # 宿主层（CLI + 本地服务）
+│  ├─ host/workbench.html               # 工作台单文件模板
+│  ├─ engine/                           # 诊断/改写/回填/复检引擎（MIT）
+│  ├─ aigc/                             # AIGC 考官与 9 维诊断（MIT）
+│  └─ tests/
+└─ dist/paper-dual.zip                  # 打包产物（gitignore）
 ```
 
 ## 许可
 
-插件代码 MIT。`engine/` 来自 [skill-paper-dual-reducer](https://github.com/mount9527/skill-paper-dual-reducer)（MIT）；
+技能代码 MIT。`engine/` 来自 [skill-paper-dual-reducer](https://github.com/mount9527/skill-paper-dual-reducer)（MIT）；
 `aigc/` 来自 [paper-dual-reducer](https://github.com/mount9527/paper-dual-reducer)（MIT）。
 AIGC 模型 `yuchuantian/AIGC_detector_zhv3`（Apache-2.0，基座 `chinese-roberta-wwm-ext` 同为 Apache-2.0）
 **不随本仓库分发**，权重由使用者首次运行时从 HuggingFace 自行下载；仓库里只有模型 id 字符串。

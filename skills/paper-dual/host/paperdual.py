@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """paper-dual · WorkBuddy 宿主层
 
-这里不是 DSH 插件的搬运，而是把「宿主」重新写了一遍：
+这里不是 DSH 插件的搬运，而是把「宿主」重新写了一遍（现作为技能内置 CLI 分发）：
 DSH 侧的 Cordis 路由、ctx.tools 注册、左侧栏面板都不存在了，换成
 
     CLI（agent 调用，JSON 进 JSON 出）
@@ -34,7 +34,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-PLUGIN_VERSION = "1.0.0"
+PLUGIN_VERSION = "1.1.0"
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 ENGINE = PLUGIN_ROOT / "engine"
 AIGC = PLUGIN_ROOT / "aigc"
@@ -261,7 +261,7 @@ def engine_script(script: str, args, timeout: int = 180) -> dict:
 
 def engine_check() -> None:
     if not (ENGINE / "run.py").exists():
-        raise UserError(f"插件里缺少引擎：{ENGINE / 'run.py'}（插件安装不完整，请重新安装）")
+        raise UserError(f"技能目录里缺少引擎：{ENGINE / 'run.py'}（技能安装不完整，请重新安装）")
 
 
 def aigc_python() -> str:
@@ -606,7 +606,7 @@ def diagnose(raw: str, force: bool = False) -> dict:
         shutil.rmtree(root, ignore_errors=True)
         hint = ""
         if re.search(r"No such file|can't open file|不是内部或外部命令", result["err"] + result["out"], re.I):
-            hint = "（python 不在 PATH，或插件目录被移动过）"
+            hint = "（python 不在 PATH，或技能目录被移动过）"
         raise UserError(f"引擎诊断失败：{clip(result['err'] or result['out'], 700)}{hint}")
 
     snapshot = original_dir / "source.docx"
@@ -970,7 +970,7 @@ def aigc_missing_payload(det: dict) -> dict:
     return {
         "ok": False,
         "code": "AIGC_DEPS_MISSING",
-        "error": "AIGC 真机依赖未安装：torch + transformers 缺失。插件不会编一个分数出来。",
+        "error": "AIGC 真机依赖未安装：torch + transformers 缺失。本技能不会编一个分数出来。",
         "setup": aigc_setup(det),
     }
 

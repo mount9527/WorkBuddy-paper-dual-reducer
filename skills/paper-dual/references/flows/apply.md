@@ -1,25 +1,28 @@
----
-description: "回填编辑清单并复检，不通过就回退"
-argument-hint: "[edits.jsonl 的路径，可省略]"
----
+# 流程 · 回填并复检
 
-回填当前版本的编辑清单。
+用户已经有 `edits.jsonl`（自己贴的、子代理写的、或上一轮留下的），要把它落到 docx。
 
-1. 如果用户给了清单路径（`$ARGUMENTS`），先确认文件存在，再：
+## 触发说法
+
+「把改稿贴回去」「回填」「复检一下」「看看能不能过闸门」
+
+## 步骤
+
+1. 用户给了清单路径时先确认文件存在，再：
 
 ```bash
-python "<插件根>/host/paperdual.py" apply --edits "$ARGUMENTS" --json
+python "<skill>/host/paperdual.py" apply --edits "<清单路径>" --json
 ```
 
 没给路径就直接：
 
 ```bash
-python "<插件根>/host/paperdual.py" apply --json
+python "<skill>/host/paperdual.py" apply --json
 ```
 
 （默认读当前版本产物目录里的 `edits.jsonl`。）
 
-2. 如果用户是在对话里直接贴了 JSONL，不要把它塞进 shell 参数；用 `Write` 落到
+2. 用户在对话里直接贴了 JSONL 时，不要把它塞进 shell 参数；用 `Write` 落到
    `<editsPath>`（`prompts` 或 `status` 会给出），再跑 `apply --json`。
 
 3. 逐项汇报：
@@ -34,8 +37,8 @@ python "<插件根>/host/paperdual.py" apply --json
 4. 通过后生成工作台与导出：
 
 ```bash
-python "<插件根>/host/paperdual.py" workbench --json
-python "<插件根>/host/paperdual.py" export --version <当前版本> --out "<用户指定路径>" --json
+python "<skill>/host/paperdual.py" workbench --json
+python "<skill>/host/paperdual.py" export --version <当前版本> --out "<用户指定路径>" --json
 ```
 
 用 `present_files` 打开工作台和 docx。
