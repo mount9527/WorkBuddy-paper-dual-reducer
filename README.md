@@ -3,7 +3,7 @@
 <p>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-1f4e79?style=flat-square"></a>
   <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-3572A5?style=flat-square">
-  <a href="https://github.com/mount9527/WorkBuddy-paper-dual-reducer/releases"><img alt="latest release" src="https://img.shields.io/github/v/release/mount9527/WorkBuddy-paper-dual-reducer?style=flat-square&color=1f4e79"></a>
+  <a href="https://github.com/mount9527/WorkBuddy-paper-dual-reducer/tags"><img alt="latest tag" src="https://img.shields.io/github/v/tag/mount9527/WorkBuddy-paper-dual-reducer?style=flat-square&color=1f4e79"></a>
   <img alt="WorkBuddy skill" src="https://img.shields.io/badge/WorkBuddy%20skill-1f4e79?style=flat-square">
   <img alt="install to ~/.workbuddy/skills" src="https://img.shields.io/badge/install-%7E%2F.workbuddy%2Fskills-555?style=flat-square">
 </p>
@@ -54,11 +54,13 @@ Windows PowerShell 里写成：
 git clone https://github.com/mount9527/WorkBuddy-paper-dual-reducer.git "$env:USERPROFILE\.workbuddy\skills\paper-dual"
 ```
 
-**方式二：下载 zip**
+**方式二：下载压缩包（不需要 git）**
 
-从 [Releases](https://github.com/mount9527/WorkBuddy-paper-dual-reducer/releases) 下 `paper-dual.zip`，
-解压到 `%USERPROFILE%\.workbuddy\skills\`，确认最终路径是
+在仓库首页点 **Code → Download ZIP**，解压后把 `skills/paper-dual` 整个目录拷到
+`%USERPROFILE%\.workbuddy\skills\`，确认最终路径是
 `...\.workbuddy\skills\paper-dual\SKILL.md`（不要多套一层目录）。
+
+> Releases 里只有 v1.0.0 的插件包，**不要用那个**；技能形态以仓库 `main` 为准。
 
 装完新开一个会话（或重启 WorkBuddy），技能列表里出现「论文双降 / paper-dual」即生效。
 之后直接在对话里说要做的事，不用记命令。
@@ -286,7 +288,7 @@ WorkBuddy-paper-dual-reducer/           # 仓库根（也是技能的分发单�
 │  ├─ engine/                           # 诊断/改写/回填/复检引擎（MIT）
 │  ├─ aigc/                             # AIGC 考官与 9 维诊断（MIT）
 │  └─ tests/
-└─ dist/paper-dual.zip                  # 打包产物（gitignore）
+└─ dist/paper-dual.zip                  # 本地打包产物（gitignore，不上传）
 ```
 
 ## 许可
