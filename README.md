@@ -3,7 +3,7 @@
 <p>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-1f4e79?style=flat-square"></a>
   <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-3572A5?style=flat-square">
-  <a href="https://github.com/mount9527/WorkBuddy-paper-dual-reducer/tags"><img alt="latest tag" src="https://img.shields.io/github/v/tag/mount9527/WorkBuddy-paper-dual-reducer?style=flat-square&color=1f4e79"></a>
+  <a href="https://github.com/mount9527/WorkBuddy-paper-dual-reducer/releases"><img alt="latest release" src="https://img.shields.io/github/v/release/mount9527/WorkBuddy-paper-dual-reducer?style=flat-square&color=1f4e79"></a>
   <img alt="WorkBuddy skill" src="https://img.shields.io/badge/WorkBuddy%20skill-1f4e79?style=flat-square">
   <img alt="install to ~/.workbuddy/skills" src="https://img.shields.io/badge/install-%7E%2F.workbuddy%2Fskills-555?style=flat-square">
 </p>
@@ -56,19 +56,21 @@ git clone https://github.com/mount9527/WorkBuddy-paper-dual-reducer.git "$env:US
 
 **方式二：下载压缩包（不需要 git）**
 
-在仓库首页点 **Code → Download ZIP**，解压后把 `skills/paper-dual` 整个目录拷到
-`%USERPROFILE%\.workbuddy\skills\`，确认最终路径是
+从 [Releases](https://github.com/mount9527/WorkBuddy-paper-dual-reducer/releases) 下 `paper-dual.zip`
+（[v1.1.0 直链](https://github.com/mount9527/WorkBuddy-paper-dual-reducer/releases/download/v1.1.0/paper-dual.zip)），
+解压到 `%USERPROFILE%\.workbuddy\skills\`，确认最终路径是
 `...\.workbuddy\skills\paper-dual\SKILL.md`（不要多套一层目录）。
 
-> Releases 里只有 v1.0.0 的插件包，**不要用那个**；技能形态以仓库 `main` 为准。
+> 也可以在仓库首页点 **Code → Download ZIP**，那样解压出来是 `WorkBuddy-paper-dual-reducer-main/`，
+> 需要自己把里面的 `skills/paper-dual` 拷到技能目录。Release 里的 `paper-dual.zip` 已经是对齐好的。
 
 装完新开一个会话（或重启 WorkBuddy），技能列表里出现「论文双降 / paper-dual」即生效。
 之后直接在对话里说要做的事，不用记命令。
 
 本地开发：直接改 `skills/paper-dual/` 里的文件，新开会话就生效（技能是目录直读，不像插件那样拷贝到 cache）。
 
-> v1.0.0 曾是**插件形态**（`/plugin marketplace add` + `/plugin install`）。仓库已改为技能分发，
-> 需要旧插件版请 `git checkout v1.0.0`；那条路不再维护。
+> `v1.0.0` 是旧版的**插件形态**（`/plugin marketplace add` + `/plugin install`），已不再维护；
+> 从 `v1.1.0` 起改为技能分发。
 
 ## 30 秒上手
 
